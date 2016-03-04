@@ -57,9 +57,8 @@ func GetMac(iface string) (string, error) {
 }
 
 func main() {
-	url := flag.String("url", "http://localhost:8080", "The addr of the application")
+	url := flag.String("url", "", "The addr of the application")
 	uuid := flag.String("uuid", getDefaultUUID(), "The UUID for the application")
-	post := flag.Bool("post", false, "If present then we post to service")
 	verbose := flag.Bool("verbose", true, "If present will log output")
 	flag.Parse()
 
@@ -98,7 +97,7 @@ func main() {
 
 	handleError(err, "Error json.Marshal: ")
 
-	if *post {
+	if *url != "" {
 		_, err = Post(*url, jsonStr)
 		handleError(err, "Error Post: ")
 		// body, _ := ioutil.ReadAll(resp.Body)
