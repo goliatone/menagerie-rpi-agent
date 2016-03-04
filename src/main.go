@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/twinj/uuid"
@@ -25,6 +26,36 @@ func saveUUID(uuid string) {
 	ioutil.WriteFile("./.device_uuid", []byte(uuid), 0644)
 }
 
+func GetSerial() (string, error) {
+	contents, err := ioutil.ReadFile("/proc/cpuinfo")
+	if err != nil {
+		return "", err
+	}
+	includeRegex, err := regexp.Compile(`Serial\s+:\s(\w+)`)
+	if err != nil {
+		return "", err
+	}
+
+	if includeRegex.Match(contents) {
+		includeFile := includeRegex.FindStringSubmatch(string(contents))
+		if len(includeFile) == 2 {
+			return includeFile[1], nil
+		}
+	}
+
+	return "", nil
+}
+
+func GetMac(iface string) (string, error) {
+	filepath := strings.Replace("/sys/class/net/#iface#/address", "#iface#", iface, -1)
+	contents, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return "", err
+	}
+	mac := strings.Replace(string(contents), "\n", "", -1)
+	return mac, nil
+}
+
 func main() {
 	url := flag.String("url", "http://localhost:8080", "The addr of the application")
 	uuid := flag.String("uuid", getDefaultUUID(), "The UUID for the application")
@@ -38,14 +69,26 @@ func main() {
 	metadata, err := GetAddress()
 	handleError(err, "Error GetAddress: ")
 
+	serial, err := GetSerial()
+	handleError(err, "Error GetAddress: ")
+
+	metadata["serial"] = serial
+
 	metadata["hostname"] = host
+
+	mac, err := GetMac("wlan0")
+	metadata["wlan0"] = mac
+
+	mac, err = GetMac("eth0")
+	metadata["eth0"] = mac
 
 	output := make(map[string]interface{})
 
 	output["metadata"] = metadata
-	// output["uuid"] = *uuid
+	output["uuid"] = *uuid
 	output["name"] = getNameFromHostname(host)
 	output["status"] = "online"
+	output["alias"] = serial
 
 	jsonStr, err := json.Marshal(output)
 
