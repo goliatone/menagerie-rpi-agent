@@ -107,7 +107,7 @@ func main() {
 
 func getNameFromHostname(hostname string, prefix string) string {
 	hostname = strings.TrimSuffix(hostname, ".local")
-	return hostname
+	return prefix + hostname
 }
 
 func handleError(err error, msg string) {
