@@ -59,6 +59,7 @@ func GetMac(iface string) (string, error) {
 func main() {
 	url := flag.String("url", "", "The addr of the application")
 	uuid := flag.String("uuid", getDefaultUUID(), "The UUID for the application")
+	namePrefix := flag.String("prefix", "rpi-", "A prefix we prepend to the hostname")
 	verbose := flag.Bool("verbose", true, "If present will log output")
 	flag.Parse()
 
@@ -85,7 +86,7 @@ func main() {
 
 	output["metadata"] = metadata
 	output["uuid"] = *uuid
-	output["name"] = getNameFromHostname(host)
+	output["name"] = getNameFromHostname(host, *namePrefix)
 	output["status"] = "online"
 	output["alias"] = serial
 
@@ -104,7 +105,7 @@ func main() {
 	}
 }
 
-func getNameFromHostname(hostname string) string {
+func getNameFromHostname(hostname string, prefix string) string {
 	hostname = strings.TrimSuffix(hostname, ".local")
 	return hostname
 }
